@@ -1,0 +1,33 @@
+---
+description: Tenant SaaS Laravel+Vue conventions — architecture, auth, permissions, Skote RTL
+alwaysApply: true
+---
+
+# Tenant SaaS — Project Conventions
+
+Read `docs/STRUCTURE.md` and `docs/PROMPT.md` for full context.
+
+## Backend
+- Flow: **Route → Controller → Service → Repository → Model**
+- Middleware on **routes only** (`routes/api.php`, `routes/admin.php`) — never in controllers
+- Use `responseJson()`, `allOrPaginate()` from `app/Helpers/ApiHandler.php`
+- Permissions: `{action}_{category}` + `AdminPermissions.php` for middleware strings
+- Tenant scoping: `TenantScope` in admin services/repos; `Super_Admin` has `tenant_id = null`
+- Arabic user-facing messages; FormRequest validation
+
+## Frontend
+- Vue 3 + Pinia + Skote **Dark RTL** via `useSkoteAssets.js`
+- Layouts: `auth` | `admin` | `dashboard` | `error` in `route.meta.layout`
+- Admin CRUD: `useAdminCrud()` + `constants.js` API routes + `adminNav.js`
+- Permission UI: `authStore.hasPermission()` — hide actions; API must also enforce
+- Reuse admin components: `PasswordInput`, `RoleSelect`, `ConfirmModal`, `InitialsAvatar`
+- Do **not** show permissions panel in dashboard card or header dropdown
+
+## Auth
+- Sanctum session + CSRF; register = company + admin → `Company_Admin`
+- Verify code OTP before dashboard access; guards in `router/guards.js`
+
+## Rules
+- Minimize diff; match existing patterns; no over-engineering
+- No git commits unless user asks
+- Test: superadmin@gmail.com / companyadmin@gmail.com — password 123456

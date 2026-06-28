@@ -1,0 +1,13 @@
+/* PrimeVue overlays must sit above Bootstrap modals (z-index: 1055) */
+.p-multiselect-overlay,
+.p-select-overlay,
+.p-dropdown-overlay,
+.p-autocomplete-overlay,
+.p-datepicker-overlay,
+.p-treeselect-overlay {
+    z-index: 1200 !important;
+}
+
+.p-component-overlay {
+    z-index: 1190 !important;
+}
