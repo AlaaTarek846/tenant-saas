@@ -8,8 +8,157 @@ Multi-tenant SaaS backend for **subscription billing** with **double-entry bookk
 
 | Deliverable | Link |
 |-------------|------|
-| GitHub (public) | _Add your repo URL here_ |
+| GitHub (public) | https://github.com/AlaaTarek846/tenant-saas |
 | Live demo | _Add your deployed URL here_ |
+
+---
+
+## How to run the project (local)
+
+### 1) Prerequisites
+
+| Tool | Version |
+|------|---------|
+| PHP | 8.2+ (with extensions: `pdo_pgsql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `fileinfo`) |
+| Composer | latest |
+| Node.js & npm | 18+ |
+| PostgreSQL | 14+ |
+
+Create the database once:
+
+```sql
+CREATE DATABASE tenant_saas;
+```
+
+### 2) Clone & install dependencies
+
+```bash
+git clone https://github.com/AlaaTarek846/tenant-saas.git
+cd tenant-saas
+
+composer install
+cp .env.example .env
+php artisan key:generate
+```
+
+### 3) Configure `.env`
+
+Open `.env` and set PostgreSQL credentials:
+
+```env
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=tenant_saas
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
+
+APP_URL=http://127.0.0.1:8000
+SANCTUM_STATEFUL_DOMAINS=localhost,127.0.0.1,127.0.0.1:8000,localhost:8000
+```
+
+For local development (shows verification code on screen):
+
+```env
+VITE_DEMO_HELPERS=true
+VITE_DEMO_VERIFY_CODE=123456
+```
+
+### 4) Database & storage
+
+```bash
+php artisan migrate --seed
+php artisan storage:link
+```
+
+**Why `storage:link`?**  
+Creates a symbolic link from `public/storage` → `storage/app/public`. Required so uploaded files (user avatars, company logos) are accessible in the browser. Run it once after clone; run again on a new server if the link is missing.
+
+On **Windows (Laragon)**: run the terminal **as Administrator** if the command fails with a permission/symlink error.
+
+### 5) Frontend assets
+
+**Production / first run (single server):**
+
+```bash
+npm install
+npm run build
+```
+
+**Development (hot reload):**
+
+```bash
+npm install
+npm run dev
+```
+
+Keep `npm run dev` running in a **second terminal** while developing the Vue admin UI.
+
+### 6) Start the application
+
+**Option A — Laravel built-in server:**
+
+```bash
+php artisan serve
+```
+
+Open: **http://127.0.0.1:8000**
+
+**Option B — Laragon:**  
+Point the document root to `public/` (e.g. virtual host `tenant-saas.test`) and ensure PostgreSQL is running in Laragon. You still need steps 2–5 above.
+
+### 7) Log in
+
+After `migrate --seed`, use:
+
+| Email | Password | Role |
+|-------|----------|------|
+| superadmin@gmail.com | 123456 | Super Admin |
+| companyadmin@gmail.com | 123456 | Company Admin |
+
+Admin panel: **http://127.0.0.1:8000/admin/dashboard**
+
+---
+
+### Quick start (copy-paste)
+
+```bash
+git clone https://github.com/AlaaTarek846/tenant-saas.git
+cd tenant-saas
+composer install
+cp .env.example .env
+php artisan key:generate
+# edit .env → DB_* and APP_URL
+
+php artisan migrate --seed
+php artisan storage:link
+
+npm install
+npm run build
+php artisan serve
+```
+
+With Vite dev server (two terminals):
+
+```bash
+# Terminal 1
+php artisan serve
+
+# Terminal 2
+npm run dev
+```
+
+---
+
+### Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| `could not connect to server` (PostgreSQL) | Start PostgreSQL; verify `DB_*` in `.env` |
+| 419 / CSRF on login | Match `APP_URL` and `SANCTUM_STATEFUL_DOMAINS` to the URL in the browser |
+| Avatars/logos not showing | Run `php artisan storage:link` |
+| Blank page / no styles | Run `npm run build` or keep `npm run dev` running |
+| `storage:link` fails on Windows | Run terminal as Administrator, or enable Developer Mode in Windows settings |
 
 ---
 
@@ -48,66 +197,18 @@ Multi-tenant SaaS backend for **subscription billing** with **double-entry bookk
 
 ## Prerequisites
 
+See **[How to run the project (local)](#how-to-run-the-project-local)** above for the full step-by-step guide.
+
 - PHP 8.2+
 - Composer
 - Node.js 18+ & npm
 - PostgreSQL 14+
 
-Create the database before migrating:
-
-```sql
-CREATE DATABASE tenant_saas;
-```
-
----
-
-## Local setup
-
-```bash
-# 1. Clone & install
-git clone <your-repo-url>
-cd tenant-saas
-composer install
-cp .env.example .env
-php artisan key:generate
-
-# 2. Configure PostgreSQL in .env (see below), then:
-php artisan migrate --seed
-
-# 3. Frontend
-npm install
-npm run build          # production
-# npm run dev          # development with HMR
-
-# 4. Run
-php artisan serve
-```
-
-Open **http://127.0.0.1:8000** → login or register.
-
-### Environment (`.env`)
-
-Copy from `.env.example`. Minimum PostgreSQL settings:
-
-```env
-DB_CONNECTION=pgsql
-DB_HOST=127.0.0.1
-DB_PORT=5432
-DB_DATABASE=tenant_saas
-DB_USERNAME=postgres
-DB_PASSWORD=your_password
-
-APP_URL=http://127.0.0.1:8000
-SANCTUM_STATEFUL_DOMAINS=localhost,127.0.0.1,127.0.0.1:8000
-```
-
-For local development, `VITE_DEMO_HELPERS=true` shows the email verification code on screen (code defaults to `123456`).
-
 ---
 
 ## Demo accounts
 
-After `php artisan migrate --seed`:
+After `php artisan migrate --seed` and `php artisan storage:link`:
 
 | Email | Password | Role |
 |-------|----------|------|
@@ -452,7 +553,14 @@ General steps:
 2. Create PostgreSQL instance on the platform
 3. Set environment variables from `.env.example`
 4. Build command: `composer install --no-dev && npm ci && npm run build`
-5. Start command: `php artisan migrate --force --seed && php artisan serve --host=0.0.0.0 --port=$PORT`
+5. Release/start command (run migrations, link storage, then serve):
+
+```bash
+php artisan migrate --force --seed
+php artisan storage:link
+php artisan serve --host=0.0.0.0 --port=$PORT
+```
+
 6. Set `APP_URL`, `SANCTUM_STATEFUL_DOMAINS` to your production domain
 7. Set `VITE_DEMO_HELPERS=false` in production
 
